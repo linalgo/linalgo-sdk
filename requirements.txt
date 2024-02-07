@@ -1,4 +1,4 @@
 numpy>=1.14.3
 pytest>=3.6.1
 requests>=2.20.0
-Django==2.2.5
+Django==3.2.24
