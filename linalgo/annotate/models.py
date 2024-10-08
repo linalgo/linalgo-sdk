@@ -16,18 +16,21 @@ class SelectorFactory:
 
     @staticmethod
     def factory(d: Dict):
-        if 'x' in d:
-            v = Vertex(d['x'], d['y'])
-            return BoundingBox.fromVertex(
-                v, height=d['height'], width=d['width'])
-        elif 'startOffset' in d:
-            return XPathSelector(
-                start_container=d['startContainer'],
-                end_container=d['endContainer'],
-                start_offset=d['startOffset'],
-                end_offset=d['endOffset']
+        if type(d) == dict:
+          if 'x' in d:
+              v = Vertex(d['x'], d['y'])
+              return BoundingBox.fromVertex(
+                  v, height=d['height'], width=d['width'])
+          elif 'startOffset' in d:
+              return XPathSelector(
+                  start_container=d['startContainer'],
+                  end_container=d['endContainer'],
+                  start_offset=d['startOffset'],
+                  end_offset=d['endOffset']
             )
-        return None
+        elif type(d) == XPathSelector:
+            return d
+        raise Exception(f"No factory found for {type(d)}")
 
 
 class XPathSelector:
@@ -56,24 +59,24 @@ class TargetFactory:
     @staticmethod
     def from_dict(d: Dict):
         if d == {}:
-            return Target(source=None, selectors=[])
+            return Target(source=None, selector=[])
         return Target(
             source=Document.factory(d['source']),
-            selectors=[SelectorFactory.factory(s) for s in d['selector']]
+            selector=[SelectorFactory.factory(s) for s in d['selector']]
         )
 
 
 class Target(TargetFactory):
 
     def __init__(self, source: 'Document' = None,
-                 selectors: Iterable[Selector] = []):
+                 selector: Iterable[Selector] = []):
         self.source = source
-        self.selectors = selectors
+        self.selector = [SelectorFactory.factory(s) for s in selector]
 
     def copy(self):
         return Target(
             source=self.source,
-            selectors=[copy.deepcopy(s) for s in self.selectors])
+            selector=[copy.deepcopy(s) for s in self.selector])
 
 
 class RegistryMixin:
@@ -175,11 +178,11 @@ class Annotation(RegistryMixin, FromIdFactoryMixin, AnnotationFactory):
 class AnnotatorFactory:
 
     @staticmethod
-    def from_dict(js):
+    def from_dict(d):
         return Annotator(
-            unique_id=js['id'],
-            name=js['name'],
-            model=js['model']
+            unique_id=d['id'],
+            name=d['name'],
+            owner=d['owner']
         )
 
 
@@ -189,10 +192,12 @@ class Annotator(RegistryMixin, FromIdFactoryMixin, AnnotatorFactory):
     """
 
     def __init__(self, name: str = None, model=None, task: 'Task' = None,
-                 annotation_type_id=None, threshold: float = 0, **kwargs):
+                 annotation_type_id=None, threshold: float = 0, owner=None, 
+                 **kwargs):
         self.setattr('name', name)
         self.setattr('task', Task.factory(task))
-        self.setattr('model', model)
+        self.setattr('owner', owner)
+        self.setattr('model', model or 'MACHINE')
         self.setattr('type_id', annotation_type_id)
         self.setattr('threshold', threshold)
         self.register()

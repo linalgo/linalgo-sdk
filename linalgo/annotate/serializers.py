@@ -1,4 +1,5 @@
 from .bbox import BoundingBox
+from .models import XPathSelector
 
 
 class Serializer:
@@ -16,7 +17,7 @@ class Serializer:
 class BoundingBoxSerializer(Serializer):
 
     @staticmethod
-    def _serializer(instance):
+    def _serialize(instance):
         s = {
             'vertex': instance.vertex,
             'height': instance.height,
@@ -24,6 +25,17 @@ class BoundingBoxSerializer(Serializer):
         }
         return s
 
+class XPathSelectorSerializer(Serializer):
+    
+    @staticmethod
+    def _serialize(instance):
+        s = {
+            'startContainer': instance.start_container,
+            'endContainer': instance.end_container,
+            'startOffset': instance.start_offset,
+            'endOffset': instance.end_offset
+        }
+        return s
 
 class SelectorSerializerFactory:
 
@@ -31,19 +43,23 @@ class SelectorSerializerFactory:
     def create(instance):
         if type(instance) == BoundingBox:
             return BoundingBoxSerializer(instance)
+        elif type(instance) == XPathSelector:
+            return XPathSelectorSerializer(instance)
         else:
-            return {}
+            raise Exception(f"No serializer factory for {type(instance)}")
 
 
 class TargetSerializer(Serializer):
 
     @staticmethod
     def _serialize(target):
-        selector_serializer = SelectorSerializerFactory(target.selectors)
         s = {
-            'source': target.source,
-            'selectors': selector_serializer.serialize()
+            'source': target.source.id,
+            'selector': []
         }
+        for selector in target.selector:
+            serializer = SelectorSerializerFactory.create(selector)
+            s['selector'].append(serializer.serialize())
         return s
 
 
@@ -59,11 +75,12 @@ class AnnotationSerializer(Serializer):
             target_serializer = TargetSerializer(instance.target)
             target = target_serializer.serialize()
         s = {
+            'task': instance.task.id,
             'entity': instance.entity.id,
-            'body': instance.body,
+            'body': instance.body or '',
             'annotator': annotator_id,
             'document': instance.document.id,
-            'created': getattr(instance, 'created', lambda: None),
+            'created': instance.created.strftime('%Y/%m/%d %H:%M:%S.%f'),
             'target': target,
             'score': getattr(instance, 'score', lambda: None)
         }

@@ -8,6 +8,7 @@ import zipfile
 
 from linalgo.annotate.models import Annotation, Annotator, Corpus, Document, \
     Entity, Task
+from linalgo.annotate.serializers import AnnotationSerializer
 
 
 class AssignmentType(Enum):
@@ -170,17 +171,18 @@ class LinalgoClient:
         return annotators
 
     def create_annotator(self, annotator):
-        if annotator.annotator_id is not None:
-            raise Exception("Annotator already has an ID.")
-        annotator_url = "{}/{}/".format(
-            self.api_url, self.endpoints['annotators'])
-        url = self.api_url + annotator_url
+        url = "{}/{}/".format(self.api_url, self.endpoints['annotators'])
         headers = { 'Authorization': f"Token {self.access_token}"}
         annotator_json = {
+            'id': annotator.id,
             'name': annotator.name,
-            'model': str(annotator.model)
+            'model': str(annotator.model),
+            'owner': annotator.owner
         }
-        res = requests.post(url, json=annotator_json, headers=headers).json()
+        res = requests.post(url, json=annotator_json, headers=headers)
+        if res.status_code != 201:
+            raise Exception(res.content)
+        res = res.json()
         annotator.annotator_id = res['id']
         annotator.owner = res['owner']
         return annotator
@@ -188,7 +190,18 @@ class LinalgoClient:
     def create_annotations(self, annotations):
         url = "{}/{}/".format(self.api_url, self.endpoints['annotations'])
         headers = {'Authorization': f"Token {self.access_token}"}
-        res = requests.post(url, json=annotations, headers=headers)
+        serializer = AnnotationSerializer(annotations)
+        payload = serializer.serialize()
+        res = requests.post(url, json=payload, headers=headers)
+        return res
+    
+    def delete_annotations(self, annotations):
+        url = "{}/{}/bulk_delete/".format(self.api_url, self.endpoints['annotations'])
+        headers = {'Authorization': f"Token {self.access_token}"}
+        annotations_ids = [annotation.id for annotation in annotations]
+        res = requests.delete(url, json=annotations_ids, headers=headers)
+        if res.status_code != 204:
+            raise Exception(res.content)
         return res
 
     def assign(self, document, annotator, task, reviewee=None,
