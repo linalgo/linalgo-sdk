@@ -17,6 +17,8 @@ class SelectorFactory:
     @staticmethod
     def factory(d: Dict):
         if type(d) == dict:
+          if d == {}:
+              return d
           if 'x' in d:
               v = Vertex(d['x'], d['y'])
               return BoundingBox.fromVertex(
