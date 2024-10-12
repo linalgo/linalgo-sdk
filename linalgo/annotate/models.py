@@ -85,7 +85,6 @@ class RegistryMixin:
 
     def __new__(cls, *args, **kwargs):
         unique_id = kwargs.get('unique_id', uuid.uuid4().hex)
-        # unique_id = uuid.UUID(unique_id).hex
         if not hasattr(cls, '_registry'):
             cls._registry = dict()
         if unique_id in cls._registry:
@@ -93,6 +92,7 @@ class RegistryMixin:
         else:
             obj = super().__new__(cls)
             obj.id = unique_id
+            cls._registry[unique_id] = obj
             return obj
 
     def register(self):

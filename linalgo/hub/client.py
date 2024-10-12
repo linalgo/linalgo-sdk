@@ -188,7 +188,7 @@ class LinalgoClient:
         return annotator
 
     def create_annotations(self, annotations):
-        url = "{}/{}/".format(self.api_url, self.endpoints['annotations'])
+        url = "{}/{}/import_annotations/".format(self.api_url, self.endpoints['annotations'])
         headers = {'Authorization': f"Token {self.access_token}"}
         serializer = AnnotationSerializer(annotations)
         payload = serializer.serialize()

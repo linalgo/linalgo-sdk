@@ -75,13 +75,12 @@ class AnnotationSerializer(Serializer):
             target_serializer = TargetSerializer(instance.target)
             target = target_serializer.serialize()
         s = {
-            'task': instance.task.id,
-            'entity': instance.entity.id,
+            'task_id': instance.task.id,
+            'entity_id': instance.entity.id,
             'body': instance.body or '',
-            'annotator': annotator_id,
-            'document': instance.document.id,
+            'annotator_id': annotator_id,
+            'document_id': instance.document.id,
             'created': instance.created.strftime('%Y/%m/%d %H:%M:%S.%f'),
-            'target': target,
-            'score': getattr(instance, 'score', lambda: None)
+            'target': target
         }
         return s
