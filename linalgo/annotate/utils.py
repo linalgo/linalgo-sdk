@@ -77,7 +77,7 @@ def multiclass_dataframe(task):
     for annotation in task.annotations:
         data = {
             'document': annotation.document_id,
-            'label': annotation.type_id,
+            'label': annotation.entity_id,
             'annotator': annotation.annotator,
             'created': annotation.created
         }

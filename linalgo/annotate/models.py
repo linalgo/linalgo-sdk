@@ -148,17 +148,20 @@ class Annotation(RegistryMixin, FromIdFactoryMixin, AnnotationFactory):
     Annotation class compatible with the W3C annotation data model.
     """
 
-    def __init__(self, entity: 'Entity', document: 'Document', body: str = None,
-                 annotator: 'Annotator' = None, task: 'Task' = None,
-                 created=None, target: Target = None, score: float = None,
-                 **kwargs):
+    def __init__(
+            self, entity: 'Entity', document: 'Document', body: str = None,
+            annotator: 'Annotator' = None, task: 'Task' = None,
+            created=None, target: Target = None, score: float = None,
+            auto_track=True, **kwargs
+        ):
         self.setattr('entity', Entity.factory(entity))
         self.setattr('score', score)
         self.setattr('body', body)
         self.setattr('task', Task.factory(task))
         self.setattr('annotator', Annotator.factory(annotator))
         self.setattr('document', Document.factory(document))
-        self.document.annotations.append(self)
+        if auto_track:
+            self.document.annotations.append(self)
         self.setattr('target', TargetFactory.factory(target))
         if created is None:
             created = datetime.now()
@@ -194,13 +197,13 @@ class Annotator(RegistryMixin, FromIdFactoryMixin, AnnotatorFactory):
     """
 
     def __init__(self, name: str = None, model=None, task: 'Task' = None,
-                 annotation_type_id=None, threshold: float = 0, owner=None, 
+                 entity_id=None, threshold: float = 0, owner=None, 
                  **kwargs):
         self.setattr('name', name)
         self.setattr('task', Task.factory(task))
         self.setattr('owner', owner)
         self.setattr('model', model or 'MACHINE')
-        self.setattr('type_id', annotation_type_id)
+        self.setattr('entity_id', entity_id)
         self.setattr('threshold', threshold)
         self.register()
 
@@ -213,11 +216,11 @@ class Annotator(RegistryMixin, FromIdFactoryMixin, AnnotatorFactory):
     def _get_annotation(self, document):
         score = self.model.decision_function([document.content])[0]
         if score >= self.threshold:
-            label = self.type_id
+            label = self.entoty_id
         else:
             label = 1  # Viewed
         annotation = Annotation(
-            type_id=label,
+            entity_id=label,
             score=score,
             text=document.content,
             annotator=self.id,

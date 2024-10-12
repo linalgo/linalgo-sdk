@@ -80,7 +80,7 @@ def compare_tags(task, untag_punct=True, min_annotators=2):
             end = anno.target['selector'][0]['endOffset']
             idx1 = xl['start'] >= start
             idx2 = xl['end'] <= end
-            xl.loc[idx1 & idx2, anno.annotator] = entities[anno.type_id]
+            xl.loc[idx1 & idx2, anno.annotator] = entities[anno.entity_id]
         if untag_punct:
             xl.loc[xl['token'].apply(is_punct), annotators] = 'O'
         al.append(xl.to_dict(orient='record'))
