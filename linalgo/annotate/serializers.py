@@ -84,3 +84,12 @@ class AnnotationSerializer(Serializer):
             'target': target
         }
         return s
+
+class DocumentSerializer(Serializer):
+    @staticmethod
+    def _serialize(instance):
+        return {
+            'id': instance.id,
+            'uri': instance.uri,
+            'content': instance.content
+        }

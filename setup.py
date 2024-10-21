@@ -10,5 +10,5 @@ setup(
     version='0.1',
     author='Arnaud Rachez',
     author_email='arnaud@linalgo.com',
-    requires=['numpy', 'scipy', 'Pillow'],
+    requires=['numpy', 'scipy', 'pillow'],
 )

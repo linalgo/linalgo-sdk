@@ -8,7 +8,7 @@ import zipfile
 
 from linalgo.annotate.models import Annotation, Annotator, Corpus, Document, \
     Entity, Task
-from linalgo.annotate.serializers import AnnotationSerializer
+from linalgo.annotate.serializers import AnnotationSerializer, DocumentSerializer
 
 
 class AssignmentType(Enum):
@@ -38,7 +38,7 @@ class LinalgoClient:
         self.api_url = api_url
         self.access_token = token
 
-    def request(self, url, query_params={}):
+    def get(self, url, query_params={}):
         headers = {'Authorization': f"Token {self.access_token}"}
         res = requests.get(url, headers=headers, params=query_params)
         if res.status_code == 401:
@@ -48,6 +48,17 @@ class LinalgoClient:
         elif res.status_code != 200:
             raise Exception(f"Request returned status {res.status_code}, {res.content}")
         return res.json()
+
+    def post(self, url, data):
+        headers = {'Authorization': f"Token {self.access_token}"}
+        res = requests.post(url, data=data, headers=headers)
+        if res.status_code == 401:
+            raise Exception(f"Authentication failed. Please check your token.")
+        if res.status_code == 404:
+            raise Exception(f"{url} not found.")
+        elif res.status_code != 201:
+            raise Exception(f"Request returned status {res.status_code}, {res.content}")
+        return res
 
     def request_csv(self, url, query_params={}):
         headers = {'Authorization': f"Token {self.access_token}"}
@@ -69,7 +80,7 @@ class LinalgoClient:
             return d
 
     def get_corpora(self):
-        res = self.request(self.endpoints['corpora'])
+        res = self.get(self.endpoints['corpora'])
         corpora = []
         for js in res['results']:
             corpus_id = js['id']
@@ -79,7 +90,7 @@ class LinalgoClient:
 
     def get_corpus(self, corpus_id):
         url = f"{self.api_url}/{self.endpoints['corpora']}/{corpus_id}/"
-        res = self.request(url)
+        res = self.get(url)
         corpus = Corpus.from_dict(res)
         # corpus = Corpus(name=res['name'], description=res['description'])
         documents = self.get_corpus_documents(corpus_id)
@@ -88,7 +99,7 @@ class LinalgoClient:
 
     def get_corpus_documents(self, corpus_id):
         url = f"{self.api_url}/documents/?page_size=1000&corpus={corpus_id}"
-        res = self.request(url)
+        res = self.get(url)
         documents = []
         for d in res['results']:
             document = Document.from_dict(d)
@@ -98,7 +109,7 @@ class LinalgoClient:
     def get_tasks(self, task_ids=[]):
         url = "tasks/"
         tasks = []
-        res = self.request(url)
+        res = self.get(url)
         if len(task_ids) == 0:
             for js in res['results']:
                 task_ids.append(js['id'])
@@ -127,13 +138,15 @@ class LinalgoClient:
         data = [Annotation.from_dict(row) for row in records]
         return data
 
-    def get_task(self, task_id, verbose=False):
+    def get_task(self, task_id, verbose=False, lazy=False):
         task_url = "{}/{}/{}/".format(
             self.api_url, self.endpoints['task'], task_id)
         if verbose:
             print(f'Retrivieving task with id {task_id}...')
-        task_json = self.request(task_url)
+        task_json = self.get(task_url)
         task = Task.from_dict(task_json)
+        if lazy:
+            return task
         if verbose:
             print('Retrieving annotators...', end=' ')
         task.annotators = self.get_annotators(task)
@@ -145,7 +158,7 @@ class LinalgoClient:
         if verbose:
             print(f'({len(task.entities)} found)')
         entities_url = "{}/{}".format(self.api_url, self.endpoints['entities'])
-        entities_json = self.request(entities_url, params)
+        entities_json = self.get(entities_url, params)
         task.entities = [Entity.from_dict(e) for e in entities_json['results']]
         if verbose:
             print('Retrieving documents...', end=' ')
@@ -159,11 +172,13 @@ class LinalgoClient:
             print(f'({len(task.annotations)} found)')
         return task
 
-    def get_annotators(self, task=None):
+    def get_annotators(self, task):
+        if isinstance(task, str):
+            task = Task(unique_id=task)
         params = {'tasks': task.id, 'page_size': 1000}
         annotators_url = "{}/{}/".format(
             self.api_url, self.endpoints['annotators'])
-        res = self.request(annotators_url, params)
+        res = self.get(annotators_url, params)
         annotators = []
         for a in res['results']:
             annotator = Annotator.from_dict(a)
@@ -204,19 +219,24 @@ class LinalgoClient:
             raise Exception(res.content)
         return res
 
-    def assign(self, document, annotator, task, reviewee=None,
-               assignment_type=AssignmentType.LABEL.value):
+    def assign(
+            self, 
+            document: Document, 
+            annotator: Annotator, 
+            task: Task, 
+            reviewee=None,
+            assignment_type=AssignmentType.LABEL.value
+        ):
         doc_status = {
             'status': AssignmentStatus.ASSIGNED.value,
             'type': assignment_type,
-            'document': document,
-            'annotator': annotator,
-            'task': task,
+            'document': document.id,
+            'annotator': annotator.id,
+            'task': task.id,
             'reviewee': reviewee
         }
         url = self.api_url + '/document-status/'
-        headers = {'Authorization': f"Token {self.access_token}"}
-        res = requests.post(url, doc_status, headers=headers)
+        res = self.post(url, doc_status)
         return res
 
     def unassign(self, status_id):
@@ -230,7 +250,12 @@ class LinalgoClient:
         docs = []
         next_url = "{}/{}/".format(self.api_url, '/document-status/')
         while next_url:
-            res = self.request(next_url, query_params=query_params)
+            res = self.get(next_url, query_params=query_params)
             next_url = res['next']
             docs.extend(res['results'])
         return docs
+    
+    def add_document(self, doc: Document, corpus: Corpus):
+        url = f"{self.api_url}/corpora/{corpus.id}/add_document/"
+        payload = DocumentSerializer(doc).serialize()
+        return self.post(url, payload)

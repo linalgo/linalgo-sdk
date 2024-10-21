@@ -84,7 +84,7 @@ class Target(TargetFactory):
 class RegistryMixin:
 
     def __new__(cls, *args, **kwargs):
-        unique_id = kwargs.get('unique_id', uuid.uuid4().hex)
+        unique_id = kwargs.get('unique_id', str(uuid.uuid4()))
         if not hasattr(cls, '_registry'):
             cls._registry = dict()
         if unique_id in cls._registry:
@@ -175,7 +175,7 @@ class Annotation(RegistryMixin, FromIdFactoryMixin, AnnotationFactory):
 
     def copy(self):
         target = self.target.copy()
-        return Annotation(unique_id=uuid.uuid4(), entity=self.entity,
+        return Annotation(unique_id=str(uuid.uuid4()), entity=self.entity,
                 document=self.document, task=self.task, target=target,
                 body=self.body, annotator=self.annotator,  score=self.score)
 
