@@ -49,9 +49,9 @@ class LinalgoClient:
             raise Exception(f"Request returned status {res.status_code}, {res.content}")
         return res.json()
 
-    def post(self, url, data):
+    def post(self, url, data=None, json=None):
         headers = {'Authorization': f"Token {self.access_token}"}
-        res = requests.post(url, data=data, headers=headers)
+        res = requests.post(url, data=data, json=json, headers=headers)
         if res.status_code == 401:
             raise Exception(f"Authentication failed. Please check your token.")
         if res.status_code == 404:
@@ -187,14 +187,13 @@ class LinalgoClient:
 
     def create_annotator(self, annotator):
         url = "{}/{}/".format(self.api_url, self.endpoints['annotators'])
-        headers = { 'Authorization': f"Token {self.access_token}"}
         annotator_json = {
             'id': annotator.id,
             'name': annotator.name,
             'model': str(annotator.model),
             'owner': annotator.owner
         }
-        res = requests.post(url, json=annotator_json, headers=headers)
+        res = self.post(url, json=annotator_json)
         if res.status_code != 201:
             raise Exception(res.content)
         res = res.json()
@@ -204,10 +203,9 @@ class LinalgoClient:
 
     def create_annotations(self, annotations):
         url = "{}/{}/import_annotations/".format(self.api_url, self.endpoints['annotations'])
-        headers = {'Authorization': f"Token {self.access_token}"}
         serializer = AnnotationSerializer(annotations)
         payload = serializer.serialize()
-        res = requests.post(url, json=payload, headers=headers)
+        res = self.post(url, json=payload)
         return res
     
     def delete_annotations(self, annotations):
@@ -236,7 +234,7 @@ class LinalgoClient:
             'reviewee': reviewee
         }
         url = self.api_url + '/document-status/'
-        res = self.post(url, doc_status)
+        res = self.post(url, data=doc_status)
         return res
 
     def unassign(self, status_id):
@@ -258,4 +256,4 @@ class LinalgoClient:
     def add_document(self, doc: Document, corpus: Corpus):
         url = f"{self.api_url}/corpora/{corpus.id}/add_document/"
         payload = DocumentSerializer(doc).serialize()
-        return self.post(url, payload)
+        return self.post(url, data=payload)

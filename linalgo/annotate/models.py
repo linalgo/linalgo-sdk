@@ -325,7 +325,7 @@ class TaskFactory:
             name=d['name'],
             description=d['description'],
             entities=[Entity(e) for e in d['entities']],
-            corpora=[Corpus(c) for c in d['corpora']],
+            corpora=[Corpus.factory(c) for c in d['corpora']],
             annotators=[Annotator(a) for a in d['annotators']],
         )
 
