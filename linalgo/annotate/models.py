@@ -118,7 +118,7 @@ class FromIdFactoryMixin:
     @classmethod
     def factory(cls, arg):
         if arg is None:
-            return None
+            return cls(unique_id='default')
         elif type(arg) == cls:
             return arg
         elif type(arg) == str:
@@ -149,10 +149,10 @@ class Annotation(RegistryMixin, FromIdFactoryMixin, AnnotationFactory):
     """
 
     def __init__(
-            self, entity: 'Entity', document: 'Document', body: str = None,
-            annotator: 'Annotator' = None, task: 'Task' = None,
-            created=None, target: Target = None, score: float = None,
-            auto_track=True, **kwargs
+            self, entity: 'Entity'=None, document: 'Document'=None, 
+            body: str = None, annotator: 'Annotator' = None, 
+            task: 'Task' = None, created=None, target: Target = None, 
+            score: float = None, auto_track=True, **kwargs
         ):
         self.setattr('entity', Entity.factory(entity))
         self.setattr('score', score)
