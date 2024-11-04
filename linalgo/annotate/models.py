@@ -170,7 +170,7 @@ class Annotation(RegistryMixin, FromIdFactoryMixin, AnnotationFactory):
             document = kwargs['document_id']
         self.setattr('document', Document.factory(document))
         if auto_track:
-            self.document.annotations.append(self)
+            self.document.annotations.add(self)
         self.setattr('target', TargetFactory.factory(target))
         if created is None:
             created = datetime.now()
@@ -242,7 +242,7 @@ class Annotator(RegistryMixin, FromIdFactoryMixin, AnnotatorFactory):
         annotation = self._get_annotation(document)
         if annotation is not None:
             self.task.annotations.append(annotation)
-            document.annotations.append(annotation)
+            document.annotations.add(annotation)
         return annotation
 
 
@@ -293,7 +293,7 @@ class Document(RegistryMixin, FromIdFactoryMixin, DocumentFactory):
         self.setattr('uri', uri)
         self.setattr('content', content)
         self.setattr('corpus', Corpus.factory(corpus))
-        self.setattr('annotations', [])
+        self.setattr('annotations', set())
         self.register()
 
     @property
