@@ -1,5 +1,5 @@
 import copy
-
+from enum import Enum
 from datetime import datetime
 from typing import Dict, Iterable, List, Union
 import json
@@ -85,6 +85,7 @@ class RegistryMixin:
 
     def __new__(cls, *args, **kwargs):
         unique_id = kwargs.get('unique_id', str(uuid.uuid4()))
+        unique_id = kwargs.get('id', unique_id)
         if not hasattr(cls, '_registry'):
             cls._registry = dict()
         if unique_id in cls._registry:
@@ -154,18 +155,26 @@ class Annotation(RegistryMixin, FromIdFactoryMixin, AnnotationFactory):
             task: 'Task' = None, created=None, target: Target = None, 
             score: float = None, auto_track=True, **kwargs
         ):
+        if 'entity_id' in kwargs:
+            entity = kwargs['entity_id']
         self.setattr('entity', Entity.factory(entity))
         self.setattr('score', score)
         self.setattr('body', body)
+        if 'task_id' in kwargs:
+            task = kwargs['task_id']
         self.setattr('task', Task.factory(task))
+        if 'annotator_id' in kwargs:
+            annotator = kwargs['annotator_id']
         self.setattr('annotator', Annotator.factory(annotator))
+        if 'document_id' in kwargs:
+            document = kwargs['document_id']
         self.setattr('document', Document.factory(document))
         if auto_track:
             self.document.annotations.append(self)
         self.setattr('target', TargetFactory.factory(target))
         if created is None:
             created = datetime.now()
-        else:
+        elif isinstance(created, str):
             created = datetime.fromisoformat(created)
         self.setattr('created', created)
         self.register()
@@ -358,3 +367,40 @@ class Task(RegistryMixin, FromIdFactoryMixin, TaskFactory):
 
     def add_document(self, document: Document):
         self.documents.add(document)
+
+
+class DocumentStatus(Enum):
+    Assigned = 'A'
+    Completed = 'C'
+
+
+class ScheduleType(Enum):
+    Review = 'R'
+    Annotate = 'A'
+
+
+class Schedule(RegistryMixin):
+
+    def __init__(
+        self, 
+        status: str, 
+        type: str, 
+        priority: float, 
+        timestamp: str | datetime, 
+        document: Document, 
+        annotator: Annotator, 
+        task: Annotator, 
+        reviewee: Annotator,
+        **kwargs
+    ):
+        self.status = DocumentStatus(status)
+        self.type = ScheduleType(type)
+        self.priority = priority
+        self.timestamp = timestamp
+        self.document = Document(document)
+        self.annotator = Annotator(annotator)
+        self.task = Task(task)
+        self.reviewee = Annotator(reviewee)
+    
+    def __repr__(self) -> str:
+        return f'Schedule::{self.type}::{self.status}'

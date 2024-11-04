@@ -6,8 +6,9 @@ import csv
 import requests
 import zipfile
 
-from linalgo.annotate.models import Annotation, Annotator, Corpus, Document, \
-    Entity, Task
+from linalgo.annotate.models import (
+    Annotation, Annotator, Corpus, Document, Entity, Task, Schedule
+)
 from linalgo.annotate.serializers import AnnotationSerializer, DocumentSerializer
 
 
@@ -239,19 +240,19 @@ class LinalgoClient:
 
     def unassign(self, status_id):
         headers = {'Authorization': f"Token {self.access_token}"}
-        url = "{}/{}/{}/".format(self.api_url, '/document-status/', status_id)
+        url = f"{self.api_url}/document-status/{status_id}/"
         res = requests.delete(url, headers=headers)
         return res
 
     def get_schedule(self, task):
         query_params = {'task': task.id, 'page_size': 1000}
-        docs = []
-        next_url = "{}/{}/".format(self.api_url, '/document-status/')
+        schedules = []
+        next_url = f"{self.api_url}/document-status/"
         while next_url:
             res = self.get(next_url, query_params=query_params)
             next_url = res['next']
-            docs.extend(res['results'])
-        return docs
+            schedules.extend(Schedule(**s) for s in res['results'])
+        return schedules
     
     def add_document(self, doc: Document, corpus: Corpus):
         url = f"{self.api_url}/corpora/{corpus.id}/add_document/"
