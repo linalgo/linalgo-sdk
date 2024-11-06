@@ -43,7 +43,7 @@ class SelectorSerializerFactory:
     def create(instance):
         if type(instance) == BoundingBox:
             return BoundingBoxSerializer(instance)
-        elif type(instance) == XPathSelector:
+        elif isinstance(instance, XPathSelector):
             return XPathSelectorSerializer(instance)
         else:
             raise Exception(f"No serializer factory for {type(instance)}")
@@ -75,6 +75,7 @@ class AnnotationSerializer(Serializer):
             target_serializer = TargetSerializer(instance.target)
             target = target_serializer.serialize()
         s = {
+            'id': instance.id,
             'task_id': instance.task.id,
             'entity_id': instance.entity.id,
             'body': instance.body or '',

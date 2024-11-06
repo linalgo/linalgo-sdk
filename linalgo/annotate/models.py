@@ -181,6 +181,12 @@ class Annotation(RegistryMixin, FromIdFactoryMixin, AnnotationFactory):
 
     def __repr__(self):
         return f'Annotation::{self.entity.name or self.entity.id}'
+    
+    def get_context(self, context_len):
+        xpath = self.target.selector[0]
+        start = max(0, xpath.start_offset - context_len)
+        end = min(xpath.end_offset + context_len, len(self.document.content))
+        return self.document.content[start:end]
 
     def copy(self):
         target = self.target.copy()
