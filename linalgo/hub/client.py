@@ -1,4 +1,5 @@
 import io
+import warnings
 from enum import Enum
 
 from contextlib import closing
@@ -171,6 +172,9 @@ class LinalgoClient:
         task.annotations = self.get_task_annotations(task_id)
         if verbose:
             print(f'({len(task.annotations)} found)')
+        n = len([a for d in task.documents for a in d.annotations])
+        if len(task.annotations) != n:
+            warnings.warn('Some annotations have no associated document.')
         return task
 
     def get_annotators(self, task):
