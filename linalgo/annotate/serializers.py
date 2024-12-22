@@ -1,3 +1,4 @@
+from dataclasses import asdict
 from .bbox import BoundingBox
 from .models import XPathSelector
 
@@ -26,7 +27,7 @@ class BoundingBoxSerializer(Serializer):
         return s
 
 class XPathSelectorSerializer(Serializer):
-    
+
     @staticmethod
     def _serialize(instance):
         s = {
@@ -63,6 +64,14 @@ class TargetSerializer(Serializer):
         return s
 
 
+class BodySerializer:
+    @staticmethod
+    def _serialize(body):
+        if isinstance(body, str):
+            return {"body": body}
+        return asdict(body)
+
+
 class AnnotationSerializer(Serializer):
 
     @staticmethod
@@ -74,6 +83,9 @@ class AnnotationSerializer(Serializer):
         if instance.target is not None:
             target_serializer = TargetSerializer(instance.target)
             target = target_serializer.serialize()
+        body = None
+        if instance.body is not None:
+            body = BodySerializer._serialize(instance.body)
         s = {
             'id': instance.id,
             'task_id': instance.task.id,
