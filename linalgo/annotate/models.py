@@ -6,7 +6,7 @@ import json
 import logging
 import uuid
 import ast
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from linalgo.annotate.bbox import BoundingBox, Vertex
 
@@ -417,15 +417,26 @@ class Schedule(RegistryMixin):
 @dataclass
 class Body:
     text: str = "N/A"
-    context: str = "N/A"
-    proba: float = -1.0
-    process: str = "N/A"
+    extra: dict = field(default_factory=dict)
+
+    def __init__(self, text: str = "N/A", **kwargs):
+        self.text = text
+        self.extra = kwargs
 
 
 class BodyFactory:
     @staticmethod
-    def from_str(s):
-        data = ast.literal_eval(s)
-        if "body" in data and isinstance(data["body"], str):
-            return data["body"]
-        return Body(**data)
+    def from_str(s: str) -> Union[str, Body]:
+        if not isinstance(s, str):
+            return "Error: Body input was not a string"
+
+        try:
+            data = ast.literal_eval(s)
+            if isinstance(data, dict):
+                return Body(**data)
+        except (ValueError, SyntaxError):
+            return s
+
+    @staticmethod
+    def from_dict(d):
+        return Body(**d)

@@ -1,6 +1,6 @@
 from dataclasses import asdict
 from .bbox import BoundingBox
-from .models import XPathSelector
+from .models import XPathSelector, Body
 
 
 class Serializer:
@@ -67,9 +67,10 @@ class TargetSerializer(Serializer):
 class BodySerializer:
     @staticmethod
     def _serialize(body):
-        if isinstance(body, str):
-            return {"body": body}
-        return asdict(body)
+        if isinstance(body, Body):
+            return asdict(body)
+        else :
+            return body
 
 
 class AnnotationSerializer(Serializer):
