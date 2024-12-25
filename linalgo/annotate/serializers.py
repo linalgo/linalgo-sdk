@@ -68,7 +68,7 @@ class BodySerializer:
     @staticmethod
     def _serialize(body):
         if isinstance(body, Body):
-            return asdict(body)
+            return {"text": body.text, **body.extras}
         else :
             return body
 
@@ -91,7 +91,7 @@ class AnnotationSerializer(Serializer):
             'id': instance.id,
             'task_id': instance.task.id,
             'entity_id': instance.entity.id,
-            'body': instance.body or '',
+            'body': BodySerializer._serialize(instance.body),
             'annotator_id': annotator_id,
             'document_id': instance.document.id,
             'created': instance.created.strftime('%Y/%m/%d %H:%M:%S.%f'),

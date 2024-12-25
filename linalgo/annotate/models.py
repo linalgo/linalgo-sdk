@@ -137,7 +137,7 @@ class AnnotationFactory:
         return Annotation(
             unique_id=d['id'],
             entity=Entity(unique_id=d['entity']),
-            body=d['body'],
+            body=BodyFactory.deserialize(d['body']),
             annotator=Annotator(unique_id=d['annotator']),
             document=Document(unique_id=d['document']),
             task=Task(unique_id=d['task']),
@@ -416,27 +416,26 @@ class Schedule(RegistryMixin):
 
 @dataclass
 class Body:
-    text: str = "N/A"
-    extra: dict = field(default_factory=dict)
+    text: str
+    extras: dict = field(default_factory=dict)
 
-    def __init__(self, text: str = "N/A", **kwargs):
-        self.text = text
-        self.extra = kwargs
+    def __getattr__(self, name):
+        return self.extras.get(name, None)
+
+    def __setattr__(self, name, value):
+        if name in {"text", "extras"}:
+            super().__setattr__(name, value)
+        else:
+            self.extras[name] = value
 
 
 class BodyFactory:
     @staticmethod
-    def from_str(s: str) -> Union[str, Body]:
-        if not isinstance(s, str):
-            return "Error: Body input was not a string"
+    def deserialize(d_u_str: Union[str, Dict]) -> Body:
+        if isinstance(d_u_str, str):
+            return d_u_str
 
-        try:
-            data = ast.literal_eval(s)
-            if isinstance(data, dict):
-                return Body(**data)
-        except (ValueError, SyntaxError):
-            return s
-
-    @staticmethod
-    def from_dict(d):
-        return Body(**d)
+        if isinstance(d_u_str, dict):
+            bod = Body( text = d_u_str.pop("text"))
+            bod.extras.update(d_u_str)
+            return bod
