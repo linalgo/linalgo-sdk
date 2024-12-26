@@ -66,7 +66,7 @@ class TargetSerializer(Serializer):
 
 class BodySerializer:
     @staticmethod
-    def _serialize(body):
+    def serialize(body):
         if isinstance(body, Body):
             return {"text": body.text, **body.extras}
         else :
@@ -84,14 +84,11 @@ class AnnotationSerializer(Serializer):
         if instance.target is not None:
             target_serializer = TargetSerializer(instance.target)
             target = target_serializer.serialize()
-        body = None
-        if instance.body is not None:
-            body = BodySerializer._serialize(instance.body)
         s = {
             'id': instance.id,
             'task_id': instance.task.id,
             'entity_id': instance.entity.id,
-            'body': BodySerializer._serialize(instance.body),
+            'body': BodySerializer.serialize(instance.body),
             'annotator_id': annotator_id,
             'document_id': instance.document.id,
             'created': instance.created.strftime('%Y/%m/%d %H:%M:%S.%f'),
