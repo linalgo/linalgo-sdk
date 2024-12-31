@@ -26,7 +26,7 @@ class BoundingBoxSerializer(Serializer):
         return s
 
 class XPathSelectorSerializer(Serializer):
-    
+
     @staticmethod
     def _serialize(instance):
         s = {
@@ -81,7 +81,7 @@ class AnnotationSerializer(Serializer):
             'body': instance.body or '',
             'annotator_id': annotator_id,
             'document_id': instance.document.id,
-            'created': instance.created.strftime('%Y/%m/%d %H:%M:%S.%f'),
+            'created': instance.created.isoformat(),
             'target': target
         }
         return s
