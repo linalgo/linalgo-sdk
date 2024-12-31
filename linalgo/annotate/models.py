@@ -150,9 +150,9 @@ class Annotation(RegistryMixin, FromIdFactoryMixin, AnnotationFactory):
     """
 
     def __init__(
-            self, entity: 'Entity'=None, document: 'Document'=None, 
-            body: str = None, annotator: 'Annotator' = None, 
-            task: 'Task' = None, created=None, target: Target = None, 
+            self, entity: 'Entity'=None, document: 'Document'=None,
+            body: str = None, annotator: 'Annotator' = None,
+            task: 'Task' = None, created=None, target: Target = None,
             score: float = None, auto_track=True, **kwargs
         ):
         if 'entity_id' in kwargs:
@@ -181,7 +181,7 @@ class Annotation(RegistryMixin, FromIdFactoryMixin, AnnotationFactory):
 
     def __repr__(self):
         return f'Annotation::{self.entity.name or self.entity.id}'
-    
+
     def get_context(self, context_len):
         xpath = self.target.selector[0]
         start = max(0, xpath.start_offset - context_len)
@@ -212,7 +212,7 @@ class Annotator(RegistryMixin, FromIdFactoryMixin, AnnotatorFactory):
     """
 
     def __init__(self, name: str = None, model=None, task: 'Task' = None,
-                 entity_id=None, threshold: float = 0, owner=None, 
+                 entity_id=None, threshold: float = 0, owner=None,
                  **kwargs):
         self.setattr('name', name)
         self.setattr('task', Task.factory(task))
@@ -347,7 +347,7 @@ class TaskFactory:
 
 class Task(RegistryMixin, FromIdFactoryMixin, TaskFactory):
     """
-    The Task class contains all information about a task: entities, corpora, 
+    The Task class contains all information about a task: entities, corpora,
     annotations.
     """
 
@@ -388,14 +388,14 @@ class ScheduleType(Enum):
 class Schedule(RegistryMixin):
 
     def __init__(
-        self, 
-        status: str, 
-        type: str, 
-        priority: float, 
-        timestamp: str | datetime, 
-        document: Document, 
-        annotator: Annotator, 
-        task: Annotator, 
+        self,
+        status: str,
+        type: str,
+        priority: float,
+        timestamp: str | datetime,
+        document: Document,
+        annotator: Annotator,
+        task: Annotator,
         reviewee: Annotator,
         **kwargs
     ):
@@ -407,6 +407,6 @@ class Schedule(RegistryMixin):
         self.annotator = Annotator(annotator)
         self.task = Task(task)
         self.reviewee = Annotator(reviewee)
-    
+
     def __repr__(self) -> str:
         return f'Schedule::{self.type}::{self.status}'
