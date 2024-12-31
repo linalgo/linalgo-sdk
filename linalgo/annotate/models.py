@@ -177,7 +177,7 @@ class Annotation(RegistryMixin, FromIdFactoryMixin, AnnotationFactory):
         if created is None:
             created = datetime.now()
         elif isinstance(created, str):
-            created = datetime.fromisoformat(created)
+            created = datetime.isoformat(created)
         self.setattr('created', created)
         self.register()
 
