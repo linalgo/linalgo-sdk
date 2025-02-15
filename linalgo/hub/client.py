@@ -48,27 +48,31 @@ class LinalgoClient:
         if res.status_code == 404:
             raise Exception(f"{url} not found.")
         elif res.status_code != 200:
-            raise Exception(f"Request returned status {res.status_code}, {res.content}")
+            raise Exception(
+                f"Request returned status {res.status_code}, {res.content}")
         return res.json()
 
     def post(self, url, data=None, json=None):
         headers = {'Authorization': f"Token {self.access_token}"}
         res = requests.post(url, data=data, json=json, headers=headers)
+        if 200 <= res.status_code < 300:
+            return res
         if res.status_code == 401:
             raise Exception(f"Authentication failed. Please check your token.")
-        if res.status_code == 404:
+        elif res.status_code == 404:
             raise Exception(f"{url} not found.")
-        elif res.status_code != 201:
-            raise Exception(f"Request returned status {res.status_code}, {res.content}")
-        return res
+        else:
+            raise Exception(
+                f"Request returned status {res.status_code}, {res.content}")
 
     def request_csv(self, url, query_params={}):
         headers = {'Authorization': f"Token {self.access_token}"}
         # stream the file
-        with closing(requests.get(url, stream=True, 
-            headers=headers, params=query_params)) as res:
+        with closing(requests.get(url, stream=True,
+                                  headers=headers, params=query_params)) as res:
             if res.status_code == 401:
-                raise Exception(f"Authentication failed. Please check your token.")
+                raise Exception(
+                    f"Authentication failed. Please check your token.")
             if res.status_code == 404:
                 raise Exception(f"{url} not found.")
             elif res.status_code != 200:
@@ -206,15 +210,23 @@ class LinalgoClient:
         annotator.owner = res['owner']
         return annotator
 
+    def add_annotators_to_task(self, annotators, task):
+        endpoint = self.endpoints['task']
+        url = f"{self.api_url}/{endpoint}/{task.id}/add_annotators/"
+        payload = [annotator.id for annotator in annotators]
+        return self.post(url, json=payload)
+
     def create_annotations(self, annotations):
-        url = "{}/{}/import_annotations/".format(self.api_url, self.endpoints['annotations'])
+        url = "{}/{}/import_annotations/".format(
+            self.api_url, self.endpoints['annotations'])
         serializer = AnnotationSerializer(annotations)
         payload = serializer.serialize()
         res = self.post(url, json=payload)
         return res
-    
+
     def delete_annotations(self, annotations):
-        url = "{}/{}/bulk_delete/".format(self.api_url, self.endpoints['annotations'])
+        url = "{}/{}/bulk_delete/".format(self.api_url,
+                                          self.endpoints['annotations'])
         headers = {'Authorization': f"Token {self.access_token}"}
         annotations_ids = [annotation.id for annotation in annotations]
         res = requests.delete(url, json=annotations_ids, headers=headers)
@@ -223,13 +235,13 @@ class LinalgoClient:
         return res
 
     def assign(
-            self, 
-            document: Document, 
-            annotator: Annotator, 
-            task: Task, 
-            reviewee=None,
-            assignment_type=AssignmentType.LABEL.value
-        ):
+        self,
+        document: Document,
+        annotator: Annotator,
+        task: Task,
+        reviewee=None,
+        assignment_type=AssignmentType.LABEL.value
+    ):
         doc_status = {
             'status': AssignmentStatus.ASSIGNED.value,
             'type': assignment_type,
@@ -257,7 +269,7 @@ class LinalgoClient:
             next_url = res['next']
             schedules.extend(Schedule(**s) for s in res['results'])
         return schedules
-    
+
     def add_document(self, doc: Document, corpus: Corpus):
         url = f"{self.api_url}/corpora/{corpus.id}/add_document/"
         payload = DocumentSerializer(doc).serialize()
