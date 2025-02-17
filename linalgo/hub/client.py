@@ -86,7 +86,8 @@ class LinalgoClient:
             return d
 
     def get_corpora(self):
-        res = self.get(self.endpoints['corpora'])
+        url = f"{self.api_url}/{self.endpoints['corpora']}/"
+        res = self.get(url)
         corpora = []
         for js in res['results']:
             corpus_id = js['id']
