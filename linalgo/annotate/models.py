@@ -269,6 +269,7 @@ class Corpus(RegistryMixin, FromIdFactoryMixin, CorpusFactory):
                  documents: Iterable['Document'] = [], **kwargs):
         self.setattr('name', name)
         self.setattr('description', description)
+        self.setattr('documents', set())
         if len(documents) > 0:
             self.setattr('documents', [Document.factory(d) for d in documents])
         self.register()
@@ -305,6 +306,9 @@ class Document(RegistryMixin, FromIdFactoryMixin, DocumentFactory):
     @property
     def entities(self):
         return list(set(a.entity for a in self.annotations))
+    
+    def __hash__(self):
+        return self.id
 
     def __repr__(self):
         return f'Document::{self.id}'
@@ -373,6 +377,28 @@ class Task(RegistryMixin, FromIdFactoryMixin, TaskFactory):
 
     def add_document(self, document: Document):
         self.documents.add(document)
+
+
+class Organization(RegistryMixin, FromIdFactoryMixin):
+
+    def __init__(
+            self, name: str, avatar: str, slug: str, description: str, 
+            website: str, email: str, location: str, individual: bool, 
+            created: str, **kwargs
+        ):
+        self.setattr('name', name)
+        self.setattr('avatar', avatar)
+        self.setattr('slug', slug)
+        self.setattr('description', description)
+        self.setattr('website', website)
+        self.setattr('email', email)
+        self.setattr('location', location)
+        self.setattr('individual', individual)
+        self.setattr('created', created)
+        self.register()
+    
+    def __repr__(self):
+        return f"{self.id}::{self.name}"
 
 
 class DocumentStatus(Enum):

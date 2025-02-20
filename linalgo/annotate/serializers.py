@@ -1,5 +1,5 @@
 from .bbox import BoundingBox
-from .models import XPathSelector
+from linalgo.annotate import models
 
 
 class Serializer:
@@ -92,5 +92,18 @@ class DocumentSerializer(Serializer):
         return {
             'id': instance.id,
             'uri': instance.uri,
-            'content': instance.content
+            'content': instance.content,
+            'corpus_id': instance.corpus.id
+        }
+
+
+class CorpusSerializer(Serializer):
+    @staticmethod
+    def _serialize(instance: models.Corpus):
+        s = DocumentSerializer(instance.documents)
+        return {
+            'id': instance.id,
+            'name': instance.name,
+            'description': instance.description,
+            'documents': s.serialize()
         }

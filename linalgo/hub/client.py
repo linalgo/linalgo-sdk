@@ -1,3 +1,4 @@
+from typing import List
 import io
 import warnings
 from enum import Enum
@@ -10,6 +11,7 @@ import zipfile
 from linalgo.annotate.models import (
     Annotation, Annotator, Corpus, Document, Entity, Task, Schedule
 )
+from linalgo.annotate import models, serializers
 from linalgo.annotate.serializers import AnnotationSerializer, DocumentSerializer
 
 
@@ -34,6 +36,7 @@ class LinalgoClient:
         'task': 'tasks',
         'annotations-export': 'annotations/export',
         'documents-export': 'documents/export',
+        'organizations': 'organizations'
     }
 
     def __init__(self, token, api_url="http://localhost:8000"):
@@ -52,9 +55,9 @@ class LinalgoClient:
                 f"Request returned status {res.status_code}, {res.content}")
         return res.json()
 
-    def post(self, url, data=None, json=None):
+    def post(self, url, data=None, files=None, json=None):
         headers = {'Authorization': f"Token {self.access_token}"}
-        res = requests.post(url, data=data, json=json, headers=headers)
+        res = requests.post(url, data=data, json=json, files=files, headers=headers)
         if 200 <= res.status_code < 300:
             return res
         if res.status_code == 401:
@@ -85,6 +88,27 @@ class LinalgoClient:
                 d = []
             return d
 
+    def create_corpus(self, corpus: Corpus, organization: models.Organization):
+        url = f"{self.api_url}/{self.endpoints['corpora']}/"
+        serializer = serializers.CorpusSerializer(corpus)
+        data = serializer.serialize()
+        data['organization'] = organization.id
+        res = self.post(url, data=data)
+        return models.Corpus(**res.json())
+    
+    def add_documents(self, documents: List[models.Document]):
+        url = f"{self.api_url}/{self.endpoints['documents']}/import_documents/"
+        serializer = serializers.DocumentSerializer(documents)
+        f = io.StringIO()
+        keys = ['id', 'uri', 'content','corpus_id']
+        writer = csv.DictWriter(f, keys)
+        writer.writeheader()
+        writer.writerows(serializer.serialize())
+        csv_content = f.getvalue()
+        files = {'fileKey': ('data.csv', csv_content.encode('utf-8'), 'text/csv')}
+        return self.post(url, files=files)
+        
+
     def get_corpora(self):
         res = self.get(self.endpoints['corpora'])
         corpora = []
@@ -93,6 +117,20 @@ class LinalgoClient:
             corpus = self.get_corpus(corpus_id)
             corpora.append(corpus)
         return corpora
+    
+    def get_organizations(self):
+        url = f"{self.api_url}/{self.endpoints['organizations']}/"
+        orgs = []
+        for data in self.get(url)['results']:
+            print(data)
+            org = models.Organization(**data)
+            orgs.append(org)
+        return self.get(url)['results']
+    
+    def get_organization(self, org_id: str):
+        url = f"{self.api_url}/{self.endpoints['organizations']}/{org_id}/"
+        data = self.get(url)
+        return models.Organization(**data)
 
     def get_corpus(self, corpus_id):
         url = f"{self.api_url}/{self.endpoints['corpora']}/{corpus_id}/"
