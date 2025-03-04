@@ -88,6 +88,10 @@ class LinalgoClient:
                 d = []
             return d
 
+    def get_current_annotator(self):
+        url = f"{self.api_url}/{self.endpoints['annotators']}/me/"
+        return Annotator(**self.get(url))
+
     def create_corpus(self, corpus: Corpus, organization: models.Organization):
         url = f"{self.api_url}/{self.endpoints['corpora']}/"
         serializer = serializers.CorpusSerializer(corpus)
@@ -107,7 +111,11 @@ class LinalgoClient:
         csv_content = f.getvalue()
         files = {'fileKey': ('data.csv', csv_content.encode('utf-8'), 'text/csv')}
         return self.post(url, files=files)
-        
+    
+    def get_next_document(self, task_id: str):
+        url = f"{self.api_url}/tasks/{task_id}/next_document/"
+        return Document(**self.get(url))
+    
 
     def get_corpora(self):
         res = self.get(self.endpoints['corpora'])
@@ -312,3 +320,8 @@ class LinalgoClient:
         url = f"{self.api_url}/corpora/{corpus.id}/add_document/"
         payload = DocumentSerializer(doc).serialize()
         return self.post(url, data=payload)
+    
+    def complete_document(self, doc, task):
+        endpoint = self.endpoints['task']
+        url = f"{self.api_url}/{endpoint}/{task.id}/complete_document/"
+        return self.post(url, data={'document': doc.id})

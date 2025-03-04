@@ -12,6 +12,16 @@ from linalgo.annotate.bbox import BoundingBox, Vertex
 Selector = Union[BoundingBox]
 
 
+class XPathSelector:
+
+    def __init__(self, start_container: str, end_container: str,
+                 start_offset: int, end_offset: int):
+        self.start_container = start_container
+        self.end_container = end_container
+        self.start_offset = start_offset
+        self.end_offset = end_offset
+
+
 class SelectorFactory:
 
     @staticmethod
@@ -33,16 +43,6 @@ class SelectorFactory:
         elif type(d) == XPathSelector:
             return d
         raise Exception(f"No factory found for {type(d)}")
-
-
-class XPathSelector:
-
-    def __init__(self, start_container: str, end_container: str,
-                 start_offset: int, end_offset: int):
-        self.start_container = start_container
-        self.end_container = end_container
-        self.start_offset = start_offset
-        self.end_offset = end_offset
 
 
 class TargetFactory:
@@ -110,7 +110,7 @@ class RegistryMixin:
         elif value not in (None, [], set()):
             self.__setattr__(name, value)
             return True
-        logging.info(f'Attribute {name} of {self} was not overridden')
+        # logging.info(f'Attribute {name} of {self} was not overridden')
         return False
 
 

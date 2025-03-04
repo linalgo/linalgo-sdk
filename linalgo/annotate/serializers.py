@@ -43,7 +43,7 @@ class SelectorSerializerFactory:
     def create(instance):
         if type(instance) == BoundingBox:
             return BoundingBoxSerializer(instance)
-        elif isinstance(instance, XPathSelector):
+        elif isinstance(instance, models.XPathSelector):
             return XPathSelectorSerializer(instance)
         else:
             raise Exception(f"No serializer factory for {type(instance)}")
