@@ -1,5 +1,6 @@
 from .bbox import BoundingBox
 from linalgo.annotate import models
+from linalgo.annotate.models import XPathSelector
 
 
 class Serializer:
@@ -26,7 +27,7 @@ class BoundingBoxSerializer(Serializer):
         return s
 
 class XPathSelectorSerializer(Serializer):
-    
+
     @staticmethod
     def _serialize(instance):
         s = {

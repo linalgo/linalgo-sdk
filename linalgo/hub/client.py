@@ -95,7 +95,7 @@ class LinalgoClient:
         data['organization'] = organization.id
         res = self.post(url, data=data)
         return models.Corpus(**res.json())
-    
+
     def add_documents(self, documents: List[models.Document]):
         url = f"{self.api_url}/{self.endpoints['documents']}/import_documents/"
         serializer = serializers.DocumentSerializer(documents)
@@ -107,7 +107,7 @@ class LinalgoClient:
         csv_content = f.getvalue()
         files = {'fileKey': ('data.csv', csv_content.encode('utf-8'), 'text/csv')}
         return self.post(url, files=files)
-        
+
 
     def get_corpora(self):
         res = self.get(self.endpoints['corpora'])
@@ -117,7 +117,7 @@ class LinalgoClient:
             corpus = self.get_corpus(corpus_id)
             corpora.append(corpus)
         return corpora
-    
+
     def get_organizations(self):
         url = f"{self.api_url}/{self.endpoints['organizations']}/"
         orgs = []
@@ -126,7 +126,7 @@ class LinalgoClient:
             org = models.Organization(**data)
             orgs.append(org)
         return self.get(url)['results']
-    
+
     def get_organization(self, org_id: str):
         url = f"{self.api_url}/{self.endpoints['organizations']}/{org_id}/"
         data = self.get(url)
