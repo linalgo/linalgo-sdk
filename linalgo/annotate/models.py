@@ -3,7 +3,6 @@ from enum import Enum
 from datetime import datetime
 from typing import Dict, Iterable, List, Union
 import json
-import logging
 import uuid
 
 from linalgo.annotate.bbox import BoundingBox, Vertex
@@ -141,6 +140,19 @@ class AnnotationFactory:
             task=Task(unique_id=d['task']),
             target=Target.factory(d['target']),
             created=d['created']
+        )
+    
+    @staticmethod
+    def from_bq_row(row):
+        return Annotation(
+            unique_id=row.id, 
+            entity=row.entity_id, 
+            document=row.document_id,
+            body=row.body,
+            annotator=row.annotator_id,
+            task=row.task_id,
+            created=row.created,
+            target=row.target
         )
 
 
@@ -287,6 +299,15 @@ class DocumentFactory:
             uri=d['uri'],
             content=d['content'],
             corpus=Corpus(d['corpus'])
+        )
+
+    @staticmethod
+    def from_bq_row(row):
+        return Document(
+            unique_id=row.id,
+            uri=row.uri,
+            content=row.content,
+            corpus=row.corpus_id
         )
 
 
@@ -436,3 +457,9 @@ class Schedule(RegistryMixin):
     
     def __repr__(self) -> str:
         return f'Schedule::{self.type}::{self.status}'
+    
+
+__all__ = [
+    'Annotation', 'Annotator', 'Corpus', 'Document', 'Entity', 'Task',
+    'Organization', 'DocumentStatus', 'ScheduleType', 'Schedule'
+]

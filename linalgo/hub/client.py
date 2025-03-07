@@ -325,3 +325,6 @@ class LinalgoClient:
         endpoint = self.endpoints['task']
         url = f"{self.api_url}/{endpoint}/{task.id}/complete_document/"
         return self.post(url, data={'document': doc.id})
+
+
+__all__ = ['LinalgoClient']
